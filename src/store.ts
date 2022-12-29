@@ -3,6 +3,8 @@ import create from 'zustand'
 import { IPoint } from './interfaces';
 
 interface IAppStore {
+  mousePosition: IPoint | null; /// posición del mouse
+  setMousePosition: (point: IPoint | null) => void;
   drawings: ReactElement[]; /// listado de elementos dibujados
   addDrawing: (drawing: ReactElement) => void;
   clearDrawings: () => void;
@@ -15,6 +17,8 @@ interface IAppStore {
 };
 
 const useAppStore = create<IAppStore>((set) => ({
+  mousePosition: null,
+  setMousePosition: (point: IPoint | null) => set(() => ({ mousePosition: point })),
   drawings: [],
   addDrawing: (drawing: ReactElement) => set((state) => ({ drawings: [...state.drawings, drawing] })),
   clearDrawings: () => set(() => ({ drawings: [] })),
