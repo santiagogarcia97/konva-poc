@@ -1,6 +1,7 @@
 import { Circle, Group, Line, Shape, Text } from "react-konva";
-import { findAngle, randomId } from "../helpers";
+import { calculateArea, findAngle, randomId } from "../helpers";
 import { IPoint } from "../interfaces";
+import * as math from 'mathjs'
 
 const Test = ({ points, closed }: { points: IPoint[], closed: boolean }) => {
 
@@ -49,6 +50,10 @@ const Test = ({ points, closed }: { points: IPoint[], closed: boolean }) => {
 
     /// Si tengo mas de dos puntos puedo calcular el poligono interno que representa el vidrio
     if (points.length > 2) {
+
+        const clockwisePolygon = calculateArea(points) > 0;
+        console.log(clockwisePolygon);
+
         for (let i = 0; i < points.length; i++) {
 
             const a = points[(i + points.length - 1) % points.length];
@@ -56,7 +61,23 @@ const Test = ({ points, closed }: { points: IPoint[], closed: boolean }) => {
             const c = points[(i + 1) % points.length];
 
             const alpha = findAngle(a, b, c);
-            const beta = alpha / 2;
+
+            //console.log(i, alpha * 180 / Math.PI, beta * 180 / Math.PI);
+
+            /// Si los puntos a, b y c estan conectados en sentido antihorario el determinante de la siguiente matriz es NEGATIVO
+            /// en caso contrario es POSITIVO
+            /// En caso de ser positivo, cambia la formula de beta
+            const matrix = [
+                [a.x, a.y, 1],
+                [b.x, b.y, 1],
+                [c.x, c.y, 1],
+            ];
+
+            const clockwise = math.det(matrix) > 0;
+
+            ///console.log(i, a, b, c, clockwise)
+
+            const beta = clockwise ? (2 * Math.PI - alpha) / 2 : alpha / 2;
 
             /// La mitad del angulo que forman los 3 puntos es el angulo beta con cateto opuesto igual a la altura del marco
             const hipotenus = height / Math.sin(beta);
@@ -66,17 +87,18 @@ const Test = ({ points, closed }: { points: IPoint[], closed: boolean }) => {
             const uVectorX = (c.x - b.x) / Math.sqrt(Math.pow(c.x - b.x, 2) + Math.pow(c.y - b.y, 2));
             const uVectorY = (c.y - b.y) / Math.sqrt(Math.pow(c.x - b.x, 2) + Math.pow(c.y - b.y, 2));
 
+            const uVector = clockwisePolygon ? { x: uVectorX * -1, y: uVectorY * -1 } : { x: uVectorX, y: uVectorY };
+
             /// El punto b se traslada en la direccion del vector unitario B->C la distancia del cateto adyacente
-            const dX = b.x + adjacent / Math.sqrt(Math.pow(uVectorX, 2) + Math.pow(uVectorY, 2)) * uVectorX;
-            const dY = b.y + adjacent / Math.sqrt(Math.pow(uVectorX, 2) + Math.pow(uVectorY, 2)) * uVectorY;
+            const dX = b.x + adjacent / Math.sqrt(Math.pow(uVector.x, 2) + Math.pow(uVector.y, 2)) * uVector.x;
+            const dY = b.y + adjacent / Math.sqrt(Math.pow(uVector.x, 2) + Math.pow(uVector.y, 2)) * uVector.y;
 
             /// El vector unitario B->C se rota 90 grados en sentido antihorario (TODO corregir el sentido)
-            const finalUVectorX = uVectorY;
-            const finalUVectorY = -uVectorX;
+            const finalUVector = { x: uVector.y, y: -uVector.x };
 
             /// El punto d se traslada en la direccion del vector unitario B->C la distancia del cateto opuesto (altura del marco)
-            const finalX = dX + height / Math.sqrt(Math.pow(finalUVectorX, 2) + Math.pow(finalUVectorY, 2)) * finalUVectorX;
-            const finalY = dY + height / Math.sqrt(Math.pow(finalUVectorX, 2) + Math.pow(finalUVectorY, 2)) * finalUVectorY;
+            const finalX = dX + height / Math.sqrt(Math.pow(finalUVector.x, 2) + Math.pow(finalUVector.y, 2)) * finalUVector.x;
+            const finalY = dY + height / Math.sqrt(Math.pow(finalUVector.x, 2) + Math.pow(finalUVector.y, 2)) * finalUVector.y;
 
 
             lines.push(<Line key={randomId()} points={[a.x, a.y, b.x, b.y]} stroke="red" strokeWidth={3} />);
@@ -90,7 +112,6 @@ const Test = ({ points, closed }: { points: IPoint[], closed: boolean }) => {
             }
         }
     }
-
 
     return (
         <Group draggable>
@@ -125,11 +146,32 @@ const Test = ({ points, closed }: { points: IPoint[], closed: boolean }) => {
                         context.fillStrokeShape(shape);
                     }
                 }}
-                fill="#00D2FF"
+                fill="#A57548"
                 stroke="black"
                 strokeWidth={1}
             />
+            {
+                internalPoints?.length > 2 &&
+                <Shape
+                    sceneFunc={(context, shape) => {
 
+                        context.beginPath();
+
+                        context.moveTo(internalPoints[0].x, internalPoints[0].y);
+                        /// Primero dibujo el perimetro del poligono
+                        for (const p of internalPoints) {
+                            context.lineTo(p.x, p.y);
+                        }
+                        context.closePath();
+                        context.fillStrokeShape(shape);
+
+
+                    }}
+                    fill="#00D2FF"
+                    stroke="black"
+                    strokeWidth={1}
+                />
+            }
             {lines}
             {circles}
             {texts}
