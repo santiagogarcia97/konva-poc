@@ -30,3 +30,11 @@ export const calculateArea = (coords: IPoint[]) => {
 
   return area / 2;
 }
+
+
+export const isInsideRadius = (p1: IPoint, p2: IPoint, radius: number) => {
+  const dx = p1.x - p2.x;
+  const dy = p1.y - p2.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  return distance < radius;
+};

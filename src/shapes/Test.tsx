@@ -52,7 +52,6 @@ const Test = ({ points, closed }: { points: IPoint[], closed: boolean }) => {
     if (points.length > 2) {
 
         const clockwisePolygon = calculateArea(points) > 0;
-        console.log(clockwisePolygon);
 
         for (let i = 0; i < points.length; i++) {
 
@@ -102,7 +101,7 @@ const Test = ({ points, closed }: { points: IPoint[], closed: boolean }) => {
 
 
             lines.push(<Line key={randomId()} points={[a.x, a.y, b.x, b.y]} stroke="red" strokeWidth={3} />);
-            circles.push(<Circle key={randomId()} x={b.x} y={b.y} radius={5} fill="blue" />);
+            circles.push(<Circle key={randomId()} x={b.x} y={b.y} radius={5} fill="blue" draggable />);
 
             if (!isNaN(finalX) && !isNaN(finalY) && isFinite(finalX) && isFinite(finalY)) {
                 circles.push(<Circle key={randomId()} x={dX} y={dY} radius={3} fill="green" />);

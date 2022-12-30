@@ -8,110 +8,106 @@ import Grid from './Grid';
 import Tools from './Tools';
 import shallow from 'zustand/shallow'
 import Test from '../shapes/Test';
-import { randomId } from '../helpers';
-
-const isInsideRadius = (p1: IPoint, p2: IPoint, radius: number) => {
-    const dx = p1.x - p2.x;
-    const dy = p1.y - p2.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    return distance < radius;
-};
+import { isInsideRadius, randomId } from '../helpers';
+import { Frame } from '../shapes/Frame';
+import { FrameModel } from '../models/FrameModel';
 
 
 const App = () => {
     const canvaHeight = window.innerHeight;
     const canvaWidth = window.innerWidth;
 
-    const [points, setPoints] = React.useState<IPoint[] | null>(null);
-
-    const [setMousePosition, addDrawing, currentDrawing, drawings, setCurrentDrawing, setStartPoint, startPoint, strokeWidth,] = useAppStore(
-        (state) => [state.setMousePosition, state.addDrawing, state.currentDrawing, state.drawings, state.setCurrentDrawing, state.setStartPoint, state.startPoint, state.strokeWidth,],
+    const [setMousePosition, frame, setFrame, mouse] = useAppStore(
+        (state) => [state.setMousePosition, state.frame, state.setFrame, state.mousePosition],
         shallow
     )
 
-    const createLine = (start: IPoint, end: IPoint): ReactElement => {
-        /*
-        return (<WindowFrame
-            key={randomId()}
-            start={start}
-
-            end={end}
-
-        />);
-        */
-        return (<Line
-            key={randomId()}
-            points={[start.x, start.y, end.x, end.y]}
-            stroke='rgba(0, 0, 0, 1)'
-            strokeWidth={strokeWidth}
-        />);
-    };
 
     const onClick = (e: KonvaEventObject<MouseEvent>) => {
+        const mousePosition = { x: e.evt.x, y: e.evt.y, };
 
-        /// Si no hay puntos, se crea el primero
-        if (!points) {
-            setPoints([{ x: e.evt.x, y: e.evt.y, }]);
+        if (!frame) {
+            const frame = new FrameModel();
+            frame.addPoint(mousePosition);
+
+            setFrame(frame);
             return;
         }
+
 
         /// Si hay puntos y se hace click derecho, se elimina el ultimo punto
         if (e.evt.button === 2) {
-            points.pop();
-            setPoints(points?.length ? [...points] : null);
+            const newFrame = frame.clone();
+            newFrame.removeLastPoint();
+            newFrame.editingPointIndex = null;
+            setFrame(newFrame);
 
             /// Si quedan puntos en el array actualizo el dibujo actual llamando a onMouseMove
             /// si no hay puntos, se elimina el dibujo actual
-            if (points?.length) onMouseMove(e); else setCurrentDrawing(null);
+            if (newFrame.points?.length) onMouseMove(e); else setFrame(null);
 
             return;
         }
 
 
         /// Si hay puntos y se hace click izquierdo, se crea un nuevo punto
-        const mousePosition = { x: e.evt.x, y: e.evt.y, };
-        if (isInsideRadius(points![0], mousePosition, 50)) {
-            addDrawing(<Test key={randomId()} points={points} closed />);
-            setPoints(null);
-            setCurrentDrawing(null);
+        if (isInsideRadius(frame.points[0], mousePosition, 50)) {
+
+            frame.closed = true;
+            setFrame(frame.clone());
+
             return;
         }
 
 
         /// Si hay puntos y se hace click izquierdo, se crea un nuevo punto
-        setPoints([...points, getEndingPoint(mousePosition)]);
-
-
+        const newFrame = frame.clone();
+        newFrame.replacePoint(frame.editingPointIndex!,mousePosition);
+        newFrame.editingPointIndex = null;
+        setFrame(newFrame);
     };
 
     const getEndingPoint = (point: IPoint): IPoint => {
 
-        const absXDiff = Math.abs(point.x - points![points!.length - 1].x);
-        const absYDiff = Math.abs(point.y - points![points!.length - 1]!.y);
+        const absXDiff = Math.abs(point.x - frame!.points[frame!.points.length - 1].x);
+        const absYDiff = Math.abs(point.y - frame!.points[frame!.points.length - 1]!.y);
 
         if (absXDiff > absYDiff) {
-            return { x: point.x, y: points![points!.length - 1]!.y, };
+            return { x: point.x, y: frame!.points[frame!.points.length - 1]!.y, };
         } else {
-            return { x: points![points!.length - 1]!.x, y: point.y, };
+            return { x: frame!.points[frame!.points.length - 1]!.x, y: point.y, };
         }
     };
 
     /// para previsualizar la linea que se esta dibujando
     const onMouseMove = (e: KonvaEventObject<MouseEvent>) => {
-        const mousePos: IPoint = { x: e.evt.x, y: e.evt.y, };
-        setMousePosition(mousePos);
+        const mousePosition: IPoint = { x: e.evt.x, y: e.evt.y, };
+        setMousePosition(mousePosition);
 
-        if (!points) return;
+        if (!frame?.points.length) return;
 
-        if (isInsideRadius(points[0], mousePos, 50)) {
-            setCurrentDrawing(
-                <Test key={randomId()} points={points} closed />
-            );
-        } else {
-            setCurrentDrawing(
-                <Test key={randomId()} points={[...points, getEndingPoint(mousePos)]} closed={false} />
-            );
+        if(frame.closed && frame.editingPointIndex === null) return;
+
+        const newFrame = frame.clone();
+
+        if(frame.editingPointIndex === null) {
+            newFrame.editingPointIndex = newFrame.points.length;
+
         }
+
+        newFrame!.closed = false;
+        newFrame!.replacePoint(newFrame.editingPointIndex!, mousePosition);
+
+        if (isInsideRadius(frame!.points[0], mousePosition, 50)) {
+            newFrame.removeLastPoint();
+            newFrame.editingPointIndex = null;
+            newFrame!.closed = true;
+            console.log(newFrame);
+        }
+
+        console.log(newFrame);
+
+        setFrame(newFrame);
         /*
         if (startPoint) {
             setCurrentDrawing(
@@ -124,8 +120,8 @@ const App = () => {
 
 
     /// junto las lineas dibujadas con la linea que se esta dibujando
-    const drawingsList = [...drawings];
-    if (currentDrawing) drawingsList.push(currentDrawing);
+    ///const drawingsList = [...drawings];
+    ///if (currentDrawing) drawingsList.push(currentDrawing);
 
     //drawingsList.push(<WindowFrame key={randomId()} points={[{ x: 300, y: 300 }, { x: 300, y: 500 }, { x: 500, y: 500 }]} />);
 
@@ -142,7 +138,7 @@ const App = () => {
             <Stage width={canvaWidth} height={canvaHeight} onClick={onClick} onMouseMove={onMouseMove} onContextMenu={onContextMenu}>
                 <Grid width={canvaWidth} height={canvaHeight}></Grid>
 
-                <Layer>{drawingsList}</Layer>
+                <Layer>{frame?.toComponent()}</Layer>
             </Stage>
 
 
