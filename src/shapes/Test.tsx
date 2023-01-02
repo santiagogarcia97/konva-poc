@@ -1,17 +1,30 @@
 import { Circle, Group, Line, Shape, Text } from "react-konva";
-import { calculateArea, findAngle, randomId } from "../helpers";
-import { IPoint } from "../interfaces";
+import { calculateArea, calculateCentroid, calculateInternalPoints, distanceBetweenPoints, findAngle, isRectangle, randomId } from "../helpers";
+import { IPoint, IRectangle } from "../interfaces";
 import * as math from 'mathjs'
+import { Section } from "./Section";
+import { Glass } from "./Glass";
+import useAppStore from "../store";
 
 const Test = ({ points, closed }: { points: IPoint[], closed: boolean }) => {
+    // const isRectangle = points.length === 4 && closed
+    //     && Math.abs(distanceBetweenPoints(points[0], points[1])) === Math.abs(distanceBetweenPoints(points[2], points[3]))
+    //     && Math.abs(distanceBetweenPoints(points[1], points[2])) === Math.abs(distanceBetweenPoints(points[3], points[0]));
 
-    const height = 20; /// altura del marco de la ventana
-    const lines = [];
-    const circles = [];
-    const texts = [];
+    const frameHeight = useAppStore(state => state.frameHeight);
+    //const lines = [];
+    const circles: JSX.Element[] = [];
+    const texts: JSX.Element[] = [];
+    const sections: JSX.Element[] = [];
+    const glass: JSX.Element[] = [];
+
+    const horizontalSections = useAppStore(state => state.horizontalSections);
+    const verticalSections = useAppStore(state => state.verticalSections);
 
     /// Puntos internos del marco de la ventana
-    const internalPoints: IPoint[] = [];
+    const internalPoints: IPoint[] = calculateInternalPoints(points, frameHeight);
+
+    ///const internalInternalPoints: IPoint[] = calculateInternalPoints(internalPoints, height / 2);
 
 
     const createDistanceLabel = (a: IPoint, b: IPoint) => {
@@ -48,131 +61,152 @@ const Test = ({ points, closed }: { points: IPoint[], closed: boolean }) => {
     }
 
 
-    /// Si tengo mas de dos puntos puedo calcular el poligono interno que representa el vidrio
-    if (points.length > 2) {
+    /// Si tengo dos puntos solamente dibujo una seccion
+    if (points.length === 2) {
+        const uVectorX = (points[1].x - points[0].x) / Math.sqrt(Math.pow(points[1].x - points[0].x, 2) + Math.pow(points[1].y - points[0].y, 2));
+        const uVectorY = (points[1].y - points[0].y) / Math.sqrt(Math.pow(points[1].x - points[0].x, 2) + Math.pow(points[1].y - points[0].y, 2));
+        const uVector = { x: uVectorX, y: uVectorY };
 
-        const clockwisePolygon = calculateArea(points) > 0;
-        console.log(clockwisePolygon);
+        const uVectorNormal = { x: uVector.y, y: uVector.x * -1 };
 
         for (let i = 0; i < points.length; i++) {
+            const vector1 = i % 2 === 0 ? uVector : { x: uVector.x * -1, y: uVector.y * -1 };
 
-            const a = points[(i + points.length - 1) % points.length];
-            const b = points[i];
-            const c = points[(i + 1) % points.length];
 
-            const alpha = findAngle(a, b, c);
-
-            //console.log(i, alpha * 180 / Math.PI, beta * 180 / Math.PI);
-
-            /// Si los puntos a, b y c estan conectados en sentido antihorario el determinante de la siguiente matriz es NEGATIVO
-            /// en caso contrario es POSITIVO
-            /// En caso de ser positivo, cambia la formula de beta
-            const matrix = [
-                [a.x, a.y, 1],
-                [b.x, b.y, 1],
-                [c.x, c.y, 1],
-            ];
-
-            const clockwise = math.det(matrix) > 0;
-
-            ///console.log(i, a, b, c, clockwise)
-
-            const beta = clockwise ? (2 * Math.PI - alpha) / 2 : alpha / 2;
-
-            /// La mitad del angulo que forman los 3 puntos es el angulo beta con cateto opuesto igual a la altura del marco
-            const hipotenus = height / Math.sin(beta);
-            const adjacent = hipotenus * Math.cos(beta);
-
-            /// Vector unitario B->C
-            const uVectorX = (c.x - b.x) / Math.sqrt(Math.pow(c.x - b.x, 2) + Math.pow(c.y - b.y, 2));
-            const uVectorY = (c.y - b.y) / Math.sqrt(Math.pow(c.x - b.x, 2) + Math.pow(c.y - b.y, 2));
-
-            const uVector = clockwisePolygon ? { x: uVectorX * -1, y: uVectorY * -1 } : { x: uVectorX, y: uVectorY };
-
-            /// El punto b se traslada en la direccion del vector unitario B->C la distancia del cateto adyacente
-            const dX = b.x + adjacent / Math.sqrt(Math.pow(uVector.x, 2) + Math.pow(uVector.y, 2)) * uVector.x;
-            const dY = b.y + adjacent / Math.sqrt(Math.pow(uVector.x, 2) + Math.pow(uVector.y, 2)) * uVector.y;
-
-            /// El vector unitario B->C se rota 90 grados en sentido antihorario (TODO corregir el sentido)
-            const finalUVector = { x: uVector.y, y: -uVector.x };
+            const dX = points[i].x + frameHeight / Math.sqrt(Math.pow(vector1.x, 2) + Math.pow(vector1.y, 2)) * vector1.x;
+            const dY = points[i].y + frameHeight / Math.sqrt(Math.pow(vector1.x, 2) + Math.pow(vector1.y, 2)) * vector1.y;
 
             /// El punto d se traslada en la direccion del vector unitario B->C la distancia del cateto opuesto (altura del marco)
-            const finalX = dX + height / Math.sqrt(Math.pow(finalUVector.x, 2) + Math.pow(finalUVector.y, 2)) * finalUVector.x;
-            const finalY = dY + height / Math.sqrt(Math.pow(finalUVector.x, 2) + Math.pow(finalUVector.y, 2)) * finalUVector.y;
+            const finalX = dX + frameHeight / Math.sqrt(Math.pow(uVectorNormal.x, 2) + Math.pow(uVectorNormal.y, 2)) * uVectorNormal.x;
+            const finalY = dY + frameHeight / Math.sqrt(Math.pow(uVectorNormal.x, 2) + Math.pow(uVectorNormal.y, 2)) * uVectorNormal.y;
 
-
-            lines.push(<Line key={randomId()} points={[a.x, a.y, b.x, b.y]} stroke="red" strokeWidth={3} />);
-            circles.push(<Circle key={randomId()} x={b.x} y={b.y} radius={5} fill="blue" />);
-
-            if (!isNaN(finalX) && !isNaN(finalY) && isFinite(finalX) && isFinite(finalY)) {
-                circles.push(<Circle key={randomId()} x={dX} y={dY} radius={3} fill="green" />);
-                circles.push(<Circle key={randomId()} x={finalX} y={finalY} radius={3} fill="green" />);
-
-                internalPoints.push({ x: finalX, y: finalY });
-            }
+            internalPoints.push({ x: finalX, y: finalY });
         }
     }
 
-    return (
-        <Group draggable>
-            <Shape
-                sceneFunc={(context, shape) => {
 
-                    context.beginPath();
+    // const centroid = calculateCentroid(points);
 
-                    /// Primero dibujo el perimetro del poligono
-                    for (const p of points) {
-                        context.lineTo(p.x, p.y);
-                    }
-                    context.lineTo(points[0].x, points[0].y);
-
-                    /// Si tengo mas de dos puntos puedo dibujar el poligono interno
-                    if (points.length > 2) {
-                        context.lineTo(internalPoints[0].x, internalPoints[0].y);
-                        for (let i = 1; i < internalPoints.length; i++) {
-                            context.lineTo(internalPoints[i].x, internalPoints[i].y);
-                            context.lineTo(points[i].x, points[i].y);
-                            context.lineTo(internalPoints[i].x, internalPoints[i].y);
-                        }
-
-                        context.lineTo(internalPoints[0].x, internalPoints[0].y);
-                        context.lineTo(points[0].x, points[0].y);
-                    }
-
-                    context.strokeShape(shape);
-
-                    if (closed) {
-                        context.closePath();
-                        context.fillStrokeShape(shape);
-                    }
-                }}
-                fill="#A57548"
-                stroke="black"
-                strokeWidth={1}
-            />
-            {
-                internalPoints?.length > 2 &&
-                <Shape
-                    sceneFunc={(context, shape) => {
-
-                        context.beginPath();
-
-                        context.moveTo(internalPoints[0].x, internalPoints[0].y);
-                        /// Primero dibujo el perimetro del poligono
-                        for (const p of internalPoints) {
-                            context.lineTo(p.x, p.y);
-                        }
-                        context.closePath();
-                        context.fillStrokeShape(shape);
+    // if (internalPoints.length > 1) circles.push(<Circle key={randomId()} x={centroid.x} y={centroid.y} radius={3} fill="green" />);
 
 
-                    }}
-                    fill="#00D2FF"
-                    stroke="black"
-                    strokeWidth={1}
-                />
+    /// Dibujo los lados
+    if (internalPoints.length >= 2) {
+        for (let i = 0; i < points.length; i++) {
+            const a = points[i];
+            const b = points[(i + 1) % points.length];
+
+            const c = internalPoints[(i + 1) % internalPoints.length];
+            const d = internalPoints[i];
+
+            if (a && b && c && d)
+                sections.push(<Section key={randomId()} points={[a, b, c, d]} />);
+
+        }
+    }
+
+
+    const rectangle = isRectangle(internalPoints);
+    const verticalFrames: { corners: IRectangle, component: JSX.Element }[] = [];
+    const horizontalFrames: { corners: IRectangle, component: JSX.Element }[] = [];
+
+    /// Calculo de marcos internos
+    if (points.length === 4 && rectangle) {
+        const rectangleWidth = rectangle.topRight.x - rectangle.topLeft.x;
+        const rectangleHeight = rectangle.bottomLeft.y - rectangle.topLeft.y;
+
+        const sectionWidth = rectangleWidth / horizontalSections;
+
+
+        for (let i = 1; i < horizontalSections; i++) {
+            const topLeft = { x: rectangle.topLeft.x + i * sectionWidth - frameHeight / 2, y: rectangle.topLeft.y };
+            const topRight = { x: rectangle.topLeft.x + i * sectionWidth + frameHeight / 2, y: rectangle.topLeft.y };
+            const bottomRight = { x: rectangle.topLeft.x + i * sectionWidth + frameHeight / 2, y: rectangle.bottomLeft.y };
+            const bottomLeft = { x: rectangle.topLeft.x + i * sectionWidth - frameHeight / 2, y: rectangle.bottomLeft.y };
+
+            texts.push(<Text key={randomId()} x={topLeft.x} y={topLeft.y} text={'H' + i.toString()} fontSize={12} />);
+            verticalFrames.push({
+                corners: { topLeft, topRight, bottomRight, bottomLeft },
+                component: <Section key={randomId()} points={[topLeft, topRight, bottomRight, bottomLeft]} />
             }
-            {lines}
+            );
+
+        }
+
+
+        const sectionHeight = rectangleHeight / verticalSections;
+        for (let i = 0; i < (verticalSections - 1) * horizontalSections; i++) {
+
+            const leftX = rectangle.topLeft.x + (i % horizontalSections) * sectionWidth + (i % horizontalSections !== 0 ? frameHeight / 2 : 0);
+            const topY = rectangle.topLeft.y + sectionHeight * Math.ceil((i + 1) / horizontalSections) - frameHeight / 2;
+            const bottomY = rectangle.topLeft.y + sectionHeight * Math.ceil((i + 1) / horizontalSections) + frameHeight / 2;
+            const rightX = rectangle.topLeft.x + (i % horizontalSections) * sectionWidth + sectionWidth - (i % horizontalSections !== horizontalSections - 1 ? frameHeight / 2 : 0);
+
+            const topLeft = { x: leftX, y: topY };
+            const topRight = { x: rightX, y: topY };
+            const bottomRight = { x: rightX, y: bottomY };
+            const bottomLeft = { x: leftX, y: bottomY };
+
+
+            // circles.push(<Circle key={randomId()} x={topLeft.x} y={topLeft.y} radius={3} fill="red" draggable />);
+            // circles.push(<Circle key={randomId()} x={topRight.x} y={topRight.y} radius={3} fill="green" draggable />);
+            // circles.push(<Circle key={randomId()} x={bottomRight.x} y={bottomRight.y} radius={3} fill="blue" draggable />);
+            // circles.push(<Circle key={randomId()} x={bottomLeft.x} y={bottomLeft.y} radius={3} fill="yellow" draggable />);
+
+            texts.push(<Text key={randomId()} x={topLeft.x} y={topLeft.y} text={'V' + i.toString()} fontSize={12} />);
+
+            horizontalFrames.push({
+                corners: { topLeft, topRight, bottomRight, bottomLeft },
+                component: <Section key={randomId()} points={[topLeft, topRight, bottomRight, bottomLeft]} />
+            });
+        }
+
+
+
+        /// Vidrios 
+        let glassCount = 0;
+        for (let i = 0; i < verticalSections; i++) {
+            for (let j = 0; j < horizontalSections; j++) {
+                const topLeft = { x: j === 0 ? rectangle.topLeft.x : verticalFrames[j - 1].corners.topRight.x, y: i === 0 ? rectangle.topLeft.y : horizontalFrames[(i - 1) * horizontalSections + j].corners.bottomLeft.y };
+                const topRight = { x: j === horizontalSections - 1 ? rectangle.topRight.x : verticalFrames[j].corners.topLeft.x, y: i === 0 ? rectangle.topRight.y : horizontalFrames[(i - 1) * horizontalSections + j].corners.bottomRight.y };
+                const bottomRight = { x: j === horizontalSections - 1 ? rectangle.bottomRight.x : verticalFrames[j].corners.bottomLeft.x, y: i === verticalSections - 1 ? rectangle.bottomRight.y : horizontalFrames[i * horizontalSections + j].corners.topRight.y };
+                const bottomLeft = { x: j === 0 ? rectangle.bottomLeft.x : verticalFrames[j - 1].corners.bottomRight.x, y: i === verticalSections - 1 ? rectangle.bottomLeft.y : horizontalFrames[i * horizontalSections + j].corners.topLeft.y };
+
+                // circles.push(<Circle key={randomId()} x={topLeft.x} y={topLeft.y} radius={10} fill="red" draggable />);
+                // circles.push(<Circle key={randomId()} x={topRight.x} y={topRight.y} radius={10} fill="green" draggable />);
+                // circles.push(<Circle key={randomId()} x={bottomRight.x} y={bottomRight.y} radius={10} fill="blue" draggable />);
+                // circles.push(<Circle key={randomId()} x={bottomLeft.x} y={bottomLeft.y} radius={10} fill="yellow" draggable />);
+                const internal = [topLeft, topRight, bottomRight, bottomLeft];
+                const glassPoints: IPoint[] = calculateInternalPoints(internal, frameHeight / 2);
+
+                for (let i = 0; i < internal.length; i++) {
+                    const a = internal[i];
+                    const b = internal[(i + 1) % internal.length];
+
+                    const c = glassPoints[(i + 1) % glassPoints.length];
+                    const d = glassPoints[i];
+
+                    if (a && b && c && d)
+                        sections.push(<Section key={randomId()} points={[a, b, c, d]} />);
+
+                }
+
+                glass.push(<Glass key={randomId()} points={glassPoints} text={glassCount.toString()} />);
+                glassCount++;
+
+            }
+        }
+
+
+    }
+
+    return (
+        <Group>
+            {sections}
+            {verticalFrames.map(f => f.component)}
+            {horizontalFrames.map(f => f.component)}
+            {glass}
+            {/* {lines} */}
             {circles}
             {texts}
 

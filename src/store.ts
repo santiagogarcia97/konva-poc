@@ -12,8 +12,18 @@ interface IAppStore {
   setStartPoint: (point: IPoint | null) => void;
   currentDrawing: ReactElement | null; /// dibujo actual
   setCurrentDrawing: (drawing: ReactElement | null) => void;
-  strokeWidth: number; /// grosor del trazo
+  strokeWidth: number; 
   setStrokeWidth: (width: number) => void;
+  horizontalSections: number; 
+  setHorizontalSections: (sections: number) => void;
+  verticalSections: number;
+  setVerticalSections: (sections: number) => void;
+  frameHeight: number; 
+  setFrameHeight: (height: number) => void;
+  windowsHeight: number;
+  setWindowsHeight: (height: number) => void;
+  windowsWidth: number;
+  setWindowsWidth: (width: number) => void;
 };
 
 const useAppStore = create<IAppStore>((set) => ({
@@ -28,6 +38,16 @@ const useAppStore = create<IAppStore>((set) => ({
   setCurrentDrawing: (drawing: ReactElement | null) => set(() => ({ currentDrawing: drawing })),
   strokeWidth: 5,
   setStrokeWidth: (width: number) => set(() => ({ strokeWidth: width })),
+  horizontalSections: 3,
+  setHorizontalSections: (sections: number) => set(() => ({ horizontalSections: sections })),
+  verticalSections: 1,
+  setVerticalSections: (sections: number) => set(() => ({ verticalSections: sections })),
+  frameHeight: 15,
+  setFrameHeight: (height: number) => set(() => ({ frameHeight: height })),
+  windowsHeight: 500,
+  setWindowsHeight: (height: number) => set(() => ({ windowsHeight: height })),
+  windowsWidth: 400,
+  setWindowsWidth: (width: number) => set(() => ({ windowsWidth: width })),
 }))
 
 export default useAppStore;

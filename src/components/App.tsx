@@ -1,6 +1,6 @@
 import { KonvaEventObject } from 'konva/lib/Node';
 import React, { MouseEventHandler, ReactElement, useEffect, useRef } from 'react';
-import { Layer, Line, Stage } from 'react-konva';
+import { Circle, Layer, Line, Stage } from 'react-konva';
 import { IPoint } from '../interfaces';
 import WindowFrame from '../shapes/WindowFrame';
 import useAppStore from '../store';
@@ -49,9 +49,14 @@ const App = () => {
 
     const onClick = (e: KonvaEventObject<MouseEvent>) => {
 
+        const mouseStagePosition = e.target.getStage()?.getRelativePointerPosition();
+        const mousePosition: IPoint = mouseStagePosition ? { x: mouseStagePosition.x, y: mouseStagePosition.y, } : { x: e.evt.x, y: e.evt.y, };
+
         /// Si no hay puntos, se crea el primero
+        if (drawings.length) return;
+
         if (!points) {
-            setPoints([{ x: e.evt.x, y: e.evt.y, }]);
+            setPoints([mousePosition]);
             return;
         }
 
@@ -69,7 +74,6 @@ const App = () => {
 
 
         /// Si hay puntos y se hace click izquierdo, se crea un nuevo punto
-        const mousePosition = { x: e.evt.x, y: e.evt.y, };
         if (isInsideRadius(points![0], mousePosition, 50)) {
             addDrawing(<Test key={randomId()} points={points} closed />);
             setPoints(null);
@@ -98,7 +102,8 @@ const App = () => {
 
     /// para previsualizar la linea que se esta dibujando
     const onMouseMove = (e: KonvaEventObject<MouseEvent>) => {
-        const mousePos: IPoint = { x: e.evt.x, y: e.evt.y, };
+        const mouseStagePosition = e.target.getStage()?.getRelativePointerPosition();
+        const mousePos: IPoint = mouseStagePosition ? { x: mouseStagePosition.x, y: mouseStagePosition.y, } : { x: e.evt.x, y: e.evt.y, };
         setMousePosition(mousePos);
 
         if (!points) return;
@@ -139,7 +144,7 @@ const App = () => {
 
     return (
         <div className='relative' >
-            <Stage width={canvaWidth} height={canvaHeight} onClick={onClick} onMouseMove={onMouseMove} onContextMenu={onContextMenu}>
+            <Stage width={canvaWidth} height={canvaHeight} onClick={onClick} onMouseMove={onMouseMove} onContextMenu={onContextMenu} offsetX={Math.floor(-window.innerWidth / 2)} offsetY={Math.floor(-window.innerHeight / 2)}>
                 <Grid width={canvaWidth} height={canvaHeight}></Grid>
 
                 <Layer>{drawingsList}</Layer>
