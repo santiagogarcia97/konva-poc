@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/konva-poc/static/css/main.05ce5a50.css",
-    "main.js": "/konva-poc/static/js/main.8510ca29.js",
+    "main.css": "/konva-poc/static/css/main.23d84eed.css",
+    "main.js": "/konva-poc/static/js/main.64037600.js",
     "static/js/787.cd8ad5af.chunk.js": "/konva-poc/static/js/787.cd8ad5af.chunk.js",
     "index.html": "/konva-poc/index.html",
-    "main.05ce5a50.css.map": "/konva-poc/static/css/main.05ce5a50.css.map",
-    "main.8510ca29.js.map": "/konva-poc/static/js/main.8510ca29.js.map",
+    "main.23d84eed.css.map": "/konva-poc/static/css/main.23d84eed.css.map",
+    "main.64037600.js.map": "/konva-poc/static/js/main.64037600.js.map",
     "787.cd8ad5af.chunk.js.map": "/konva-poc/static/js/787.cd8ad5af.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.05ce5a50.css",
-    "static/js/main.8510ca29.js"
+    "static/css/main.23d84eed.css",
+    "static/js/main.64037600.js"
   ]
 }
