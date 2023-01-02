@@ -20,6 +20,9 @@ const Tools = () => {
     const windowsWidth = useAppStore(state => state.windowsWidth);
     const setWindowsWidth = useAppStore(state => state.setWindowsWidth);
 
+    const internalFrameHeight = useAppStore(state => state.internalFrameHeight);
+    const setInternalFrameHeight = useAppStore(state => state.setInternalFrameHeight);
+
     useEffect(() => { newSquareFrame(windowsHeight, windowsWidth) }, []);
 
 
@@ -65,7 +68,10 @@ const Tools = () => {
             </div>
             <div className="mt-4 w-full flex flex-col">
                 <label className="mr-2">Altura del marco</label>
-                <input className="btn" type='number' min={1} max={30} value={frameHeight} onChange={(e) => setFrameHeight(Number(e.target.value))} />
+                <div className="flex flex-row">
+                    <input className="btn w-full" type='number' min={1} max={30} value={frameHeight} onChange={(e) => setFrameHeight(Number(e.target.value))} />
+                    <input className="ml-4 btn w-full" type='number' min={1} max={30} value={internalFrameHeight} onChange={(e) => setInternalFrameHeight(Number(e.target.value))} />
+                </div>
             </div>
             <div className="mt-4 w-full flex flex-col">
                 <label className="mr-2">Divisiones horizontales</label>

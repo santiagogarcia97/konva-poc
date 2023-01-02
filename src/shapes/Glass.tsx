@@ -27,6 +27,7 @@ export const Glass = ({ points, text }: { points: IPoint[], text: string }) => {
                 fill="#00D2FF"
                 stroke="black"
                 strokeWidth={1}
+                opacity={0.8}
             />
             <Text text={text} x={centroid.x} y={centroid.y} />
         </Group>

@@ -12,6 +12,8 @@ const Test = ({ points, closed }: { points: IPoint[], closed: boolean }) => {
     //     && Math.abs(distanceBetweenPoints(points[1], points[2])) === Math.abs(distanceBetweenPoints(points[3], points[0]));
 
     const frameHeight = useAppStore(state => state.frameHeight);
+    const internalFrameHeight = useAppStore(state => state.internalFrameHeight);
+
     //const lines = [];
     const circles: JSX.Element[] = [];
     const texts: JSX.Element[] = [];
@@ -177,7 +179,7 @@ const Test = ({ points, closed }: { points: IPoint[], closed: boolean }) => {
                 // circles.push(<Circle key={randomId()} x={bottomRight.x} y={bottomRight.y} radius={10} fill="blue" draggable />);
                 // circles.push(<Circle key={randomId()} x={bottomLeft.x} y={bottomLeft.y} radius={10} fill="yellow" draggable />);
                 const internal = [topLeft, topRight, bottomRight, bottomLeft];
-                const glassPoints: IPoint[] = calculateInternalPoints(internal, frameHeight / 2);
+                const glassPoints: IPoint[] = calculateInternalPoints(internal, internalFrameHeight);
 
                 for (let i = 0; i < internal.length; i++) {
                     const a = internal[i];

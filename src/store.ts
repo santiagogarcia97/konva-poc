@@ -24,6 +24,8 @@ interface IAppStore {
   setWindowsHeight: (height: number) => void;
   windowsWidth: number;
   setWindowsWidth: (width: number) => void;
+  internalFrameHeight: number;
+  setInternalFrameHeight: (height: number) => void;
 };
 
 const useAppStore = create<IAppStore>((set) => ({
@@ -42,12 +44,14 @@ const useAppStore = create<IAppStore>((set) => ({
   setHorizontalSections: (sections: number) => set(() => ({ horizontalSections: sections })),
   verticalSections: 1,
   setVerticalSections: (sections: number) => set(() => ({ verticalSections: sections })),
-  frameHeight: 15,
+  frameHeight: 20,
   setFrameHeight: (height: number) => set(() => ({ frameHeight: height })),
   windowsHeight: 500,
   setWindowsHeight: (height: number) => set(() => ({ windowsHeight: height })),
   windowsWidth: 400,
   setWindowsWidth: (width: number) => set(() => ({ windowsWidth: width })),
+  internalFrameHeight: 10,
+  setInternalFrameHeight: (height: number) => set(() => ({ internalFrameHeight: height })),
 }))
 
 export default useAppStore;
