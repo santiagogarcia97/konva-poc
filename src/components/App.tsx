@@ -2,13 +2,13 @@ import { KonvaEventObject } from 'konva/lib/Node';
 import React, { MouseEventHandler, ReactElement, useEffect, useRef } from 'react';
 import { Circle, Layer, Line, Stage } from 'react-konva';
 import { IPoint } from '../interfaces';
-import WindowFrame from '../shapes/WindowFrame';
 import useAppStore from '../store';
 import Grid from './Grid';
 import Tools from './Tools';
 import shallow from 'zustand/shallow'
 import Test from '../shapes/Test';
 import { randomId } from '../helpers';
+import Window from '../shapes/Window';
 
 const isInsideRadius = (p1: IPoint, p2: IPoint, radius: number) => {
     const dx = p1.x - p2.x;
@@ -22,119 +22,119 @@ const App = () => {
     const canvaHeight = window.innerHeight;
     const canvaWidth = window.innerWidth;
 
-    const [points, setPoints] = React.useState<IPoint[] | null>(null);
-
-    const [setMousePosition, addDrawing, currentDrawing, drawings, setCurrentDrawing, setStartPoint, startPoint, strokeWidth,] = useAppStore(
-        (state) => [state.setMousePosition, state.addDrawing, state.currentDrawing, state.drawings, state.setCurrentDrawing, state.setStartPoint, state.startPoint, state.strokeWidth,],
+    const [
+        setMousePosition,
+        addDrawing,
+        currentDrawing,
+        drawings,
+        setCurrentDrawing,
+        clearDrawings,
+        currentPoints,
+        setCurrentPoints,
+        windowModel,
+        setWindowModel,
+    ] = useAppStore(
+        (state) => [
+            state.setMousePosition,
+            state.addDrawing,
+            state.currentDrawing,
+            state.drawings,
+            state.setCurrentDrawing,
+            state.clearDrawings,
+            state.currentPoints,
+            state.setCurrentPoints,
+            state.windowModel,
+            state.setWindowModel,
+        ],
         shallow
     )
 
-    const createLine = (start: IPoint, end: IPoint): ReactElement => {
-        /*
-        return (<WindowFrame
-            key={randomId()}
-            start={start}
-
-            end={end}
-
-        />);
-        */
-        return (<Line
-            key={randomId()}
-            points={[start.x, start.y, end.x, end.y]}
-            stroke='rgba(0, 0, 0, 1)'
-            strokeWidth={strokeWidth}
-        />);
-    };
-
-    const onClick = (e: KonvaEventObject<MouseEvent>) => {
-
+    const getMousePosition = (e: KonvaEventObject<MouseEvent>): IPoint => {
         const mouseStagePosition = e.target.getStage()?.getRelativePointerPosition();
         const mousePosition: IPoint = mouseStagePosition ? { x: mouseStagePosition.x, y: mouseStagePosition.y, } : { x: e.evt.x, y: e.evt.y, };
+        setMousePosition(mousePosition);
+        return mousePosition;
+    }
 
-        /// Si no hay puntos, se crea el primero
-        if (drawings.length) return;
+    const onClick = (e: KonvaEventObject<MouseEvent>) => {
+        const mousePosition = getMousePosition(e);
+        
+        /// Si ya tengo un dibujo hecho no le permito agregar otro
+        if (drawings.length && !currentPoints) return;
 
-        if (!points) {
-            setPoints([mousePosition]);
+        /// Si no hay puntos, se crea el primer punto
+        if (!currentPoints) {
+            setCurrentPoints([mousePosition]);
             return;
         }
 
         /// Si hay puntos y se hace click derecho, se elimina el ultimo punto
         if (e.evt.button === 2) {
-            points.pop();
-            setPoints(points?.length ? [...points] : null);
+            currentPoints.pop();
+            setCurrentPoints(currentPoints?.length ? [...currentPoints] : null);
 
             /// Si quedan puntos en el array actualizo el dibujo actual llamando a onMouseMove
             /// si no hay puntos, se elimina el dibujo actual
-            if (points?.length) onMouseMove(e); else setCurrentDrawing(null);
-
+            if (currentPoints?.length) onMouseMove(e); else setCurrentDrawing(null);
             return;
         }
 
 
-        /// Si hay puntos y se hace click izquierdo, se crea un nuevo punto
-        if (isInsideRadius(points![0], mousePosition, 50)) {
-            addDrawing(<Test key={randomId()} points={points} closed />);
-            setPoints(null);
+        /// Si hay puntos y se hace click izquierdo dentro de un radio del punto inicial, se cierra y se crea el dibujo
+        if (isInsideRadius(currentPoints![0], mousePosition, 50)) {
+            addDrawing(<Test key={randomId()} points={currentPoints} closed />);
+            setCurrentPoints(null);
             setCurrentDrawing(null);
             return;
         }
 
 
         /// Si hay puntos y se hace click izquierdo, se crea un nuevo punto
-        setPoints([...points, getEndingPoint(mousePosition)]);
-
-
+        setCurrentPoints([...currentPoints, getEndingPoint(mousePosition)]);
     };
 
+    /// Funcion para proyectar el punto paralelo al eje X o Y dependiendo de cual sea mas cercano
     const getEndingPoint = (point: IPoint): IPoint => {
 
-        const absXDiff = Math.abs(point.x - points![points!.length - 1].x);
-        const absYDiff = Math.abs(point.y - points![points!.length - 1]!.y);
+        const absXDiff = Math.abs(point.x - currentPoints![currentPoints!.length - 1].x);
+        const absYDiff = Math.abs(point.y - currentPoints![currentPoints!.length - 1]!.y);
 
         if (absXDiff > absYDiff) {
-            return { x: point.x, y: points![points!.length - 1]!.y, };
+            return { x: point.x, y: currentPoints![currentPoints!.length - 1]!.y, };
         } else {
-            return { x: points![points!.length - 1]!.x, y: point.y, };
+            return { x: currentPoints![currentPoints!.length - 1]!.x, y: point.y, };
         }
     };
 
     /// para previsualizar la linea que se esta dibujando
     const onMouseMove = (e: KonvaEventObject<MouseEvent>) => {
-        const mouseStagePosition = e.target.getStage()?.getRelativePointerPosition();
-        const mousePos: IPoint = mouseStagePosition ? { x: mouseStagePosition.x, y: mouseStagePosition.y, } : { x: e.evt.x, y: e.evt.y, };
-        setMousePosition(mousePos);
+        const mousePosition = getMousePosition(e);
 
-        if (!points) return;
+        /// Si no hay puntos, no hago nada
+        if (!currentPoints) return;
 
-        if (isInsideRadius(points[0], mousePos, 50)) {
-            setCurrentDrawing(
-                <Test key={randomId()} points={points} closed />
+        /// Si hay puntos, previsualizo la linea que se esta dibujando
+        clearDrawings();
+        if (isInsideRadius(currentPoints[0], mousePosition, 50)) {
+            addDrawing(
+                <Test key={randomId()} points={currentPoints} closed />
             );
         } else {
-            setCurrentDrawing(
-                <Test key={randomId()} points={[...points, getEndingPoint(mousePos)]} closed={false} />
+            addDrawing(
+                <Test key={randomId()} points={[...currentPoints, getEndingPoint(mousePosition)]} closed={false} />
             );
         }
-        /*
-        if (startPoint) {
-            setCurrentDrawing(
-                createLine(startPoint, getEndingPoint(mousePos))
-            );
-        }
-        */
     };
 
 
 
     /// junto las lineas dibujadas con la linea que se esta dibujando
-    const drawingsList = [...drawings];
-    if (currentDrawing) drawingsList.push(currentDrawing);
+    //const drawingsList = [...drawings];
+    //if (currentDrawing) drawingsList.push(currentDrawing);
 
-    //drawingsList.push(<WindowFrame key={randomId()} points={[{ x: 300, y: 300 }, { x: 300, y: 500 }, { x: 500, y: 500 }]} />);
+    const drawingsList = [];
+    if(windowModel) drawingsList.push(<Window key={randomId()} window={windowModel} />);
 
-    //drawingsList.push(<WindowFrame key={randomId()} points={[{ x: 300, y: 300 }, { x: 600, y: 100 }, { x: 500, y: 500 }]} />);
 
     const onContextMenu = (e: KonvaEventObject<PointerEvent>) => {
         e.evt.preventDefault();
@@ -144,7 +144,15 @@ const App = () => {
 
     return (
         <div className='relative' >
-            <Stage width={canvaWidth} height={canvaHeight} onClick={onClick} onMouseMove={onMouseMove} onContextMenu={onContextMenu} offsetX={Math.floor(-window.innerWidth / 2)} offsetY={Math.floor(-window.innerHeight / 2)}>
+            <Stage
+                width={canvaWidth}
+                height={canvaHeight}
+                onClick={onClick}
+                onMouseMove={onMouseMove}
+                onContextMenu={onContextMenu}
+                offsetX={Math.floor(-window.innerWidth / 2)}
+                offsetY={Math.floor(-window.innerHeight / 2)}
+            >
                 <Grid width={canvaWidth} height={canvaHeight}></Grid>
 
                 <Layer>{drawingsList}</Layer>

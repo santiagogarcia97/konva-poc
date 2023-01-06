@@ -1,4 +1,4 @@
-import { Layer, Line } from 'react-konva';
+import { Circle, Layer, Line } from 'react-konva';
 import { randomId } from '../helpers';
 
 const Grid = ({ width, height }: { width: number, height: number }) => {
@@ -38,7 +38,12 @@ const Grid = ({ width, height }: { width: number, height: number }) => {
             />
         );
     }
-    return (<Layer>{lines.map(e => e)}</Layer>);
+    return (
+        <Layer>
+            {lines.map(e => e)}
+            <Circle x={0} y={0} radius={3} fill='black' />
+        </Layer>
+    );
 };
 
 export default Grid;

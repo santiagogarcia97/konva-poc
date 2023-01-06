@@ -1,19 +1,27 @@
 import { ReactElement } from 'react';
 import create from 'zustand'
 import { IPoint } from './interfaces';
+import { WindowModel } from './models/WindowModel';
 
 interface IAppStore {
-  mousePosition: IPoint | null; /// posición del mouse
+  /// Posición del mouse
+  mousePosition: IPoint | null;
   setMousePosition: (point: IPoint | null) => void;
-  drawings: ReactElement[]; /// listado de elementos dibujados
+
+  /// Para mantener el estado de los dibujos
+  drawings: ReactElement[];
   addDrawing: (drawing: ReactElement) => void;
   clearDrawings: () => void;
-  startPoint: IPoint | null; /// punto inicial del dibujo actual
-  setStartPoint: (point: IPoint | null) => void;
-  currentDrawing: ReactElement | null; /// dibujo actual
+  currentPoints: IPoint[] | null;
+  setCurrentPoints: (points: IPoint[] | null) => void;
+  currentDrawing: ReactElement | null; 
   setCurrentDrawing: (drawing: ReactElement | null) => void;
-  strokeWidth: number; 
-  setStrokeWidth: (width: number) => void;
+
+  windowModel: WindowModel | null;
+  setWindowModel: (windowModel: WindowModel | null) => void;
+
+
+  /// Propiedades de la ventana
   horizontalSections: number; 
   setHorizontalSections: (sections: number) => void;
   verticalSections: number;
@@ -29,17 +37,23 @@ interface IAppStore {
 };
 
 const useAppStore = create<IAppStore>((set) => ({
+  /// Posición del mouse
   mousePosition: null,
   setMousePosition: (point: IPoint | null) => set(() => ({ mousePosition: point })),
+  
+  /// Para mantener el estado de los dibujos
   drawings: [],
   addDrawing: (drawing: ReactElement) => set((state) => ({ drawings: [...state.drawings, drawing] })),
   clearDrawings: () => set(() => ({ drawings: [] })),
-  startPoint: null,
-  setStartPoint: (point: IPoint | null) => set(() => ({ startPoint: point })),
+  currentPoints: null,
+  setCurrentPoints: (points: IPoint[] | null) => set(() => ({ currentPoints: points })),
   currentDrawing: null,
   setCurrentDrawing: (drawing: ReactElement | null) => set(() => ({ currentDrawing: drawing })),
-  strokeWidth: 5,
-  setStrokeWidth: (width: number) => set(() => ({ strokeWidth: width })),
+
+  windowModel: null,
+  setWindowModel: (windowModel: WindowModel | null) => set(() => ({ windowModel: windowModel })),
+
+  /// Propiedades de la ventana
   horizontalSections: 3,
   setHorizontalSections: (sections: number) => set(() => ({ horizontalSections: sections })),
   verticalSections: 1,

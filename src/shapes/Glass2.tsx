@@ -1,10 +1,9 @@
 import { Group, Shape, Text } from "react-konva";
 import { calculateCentroid } from "../helpers";
-import { IPoint } from "../interfaces";
+import { GlassModel } from "../models/GlassModel";
 
-export const Glass = ({ points, text }: { points: IPoint[], text: string }) => {
-
-    const centroid = calculateCentroid(points);
+export const Glass2 = ({glass}: {glass: GlassModel}) => {
+    const centroid = calculateCentroid(glass.points);
 
     return (
         <Group>
@@ -14,11 +13,11 @@ export const Glass = ({ points, text }: { points: IPoint[], text: string }) => {
                     context.beginPath();
 
                     /// Primero dibujo el perimetro del poligono
-                    context.moveTo(points[0].x, points[0].y);
-                    for (const p of points) {
+                    context.moveTo(glass.points[0].x, glass.points[0].y);
+                    for (const p of glass.points) {
                         context.lineTo(p.x, p.y);
                     }
-                    context.lineTo(points[0].x, points[0].y);
+                    context.lineTo(glass.points[0].x, glass.points[0].y);
 
                     context.closePath();
                     context.fillStrokeShape(shape);
@@ -29,7 +28,7 @@ export const Glass = ({ points, text }: { points: IPoint[], text: string }) => {
                 strokeWidth={1}
                 opacity={0.6}
             />
-            <Text text={text} x={centroid.x} y={centroid.y} />
+            <Text text={glass.id} x={centroid.x} y={centroid.y} />
         </Group>
     );
-}; 
+}

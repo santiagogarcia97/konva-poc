@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { randomId } from "../helpers";
+import { WindowModel } from "../models/WindowModel";
 import Test from "../shapes/Test";
 import useAppStore from "../store";
 
@@ -23,6 +24,9 @@ const Tools = () => {
     const internalFrameHeight = useAppStore(state => state.internalFrameHeight);
     const setInternalFrameHeight = useAppStore(state => state.setInternalFrameHeight);
 
+    const windowModel = useAppStore(state => state.windowModel);
+    const setWindowModel = useAppStore(state => state.setWindowModel);
+
     useEffect(() => { newSquareFrame(windowsHeight, windowsWidth) }, []);
 
 
@@ -36,9 +40,20 @@ const Tools = () => {
         ];
 
         clearDrawings();
-        addDrawing(<Test key={randomId()} points={points} closed />);
+        //addDrawing(<Test key={randomId()} points={points} closed />);
         setWindowsHeight(height);
         setWindowsWidth(width);
+
+        setWindowModel(new WindowModel(
+            randomId(),
+            windowsHeight,
+            windowsWidth,
+            frameHeight,
+            internalFrameHeight,
+            horizontalSections,
+            verticalSections,
+            points,
+        ));
     }
 
 
@@ -48,7 +63,7 @@ const Tools = () => {
 
 
     return (
-        <div className="h-full w-80 bg-gray-300 absolute top-0 flex flex-col items-center p-4">
+        <div className="h-full w-72 bg-gray-300 absolute top-0 flex flex-col items-center p-4">
 
             <div className="w-full">Mouse Position  X:{mousePosition?.x ?? '-'} Y:{mousePosition?.y ?? '-'}</div>
 
