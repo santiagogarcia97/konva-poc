@@ -1,4 +1,3 @@
-import { ReactElement } from 'react';
 import create from 'zustand'
 import { IPoint } from './interfaces';
 import { WindowModel } from './models/WindowModel';
@@ -8,14 +7,8 @@ interface IAppStore {
   mousePosition: IPoint | null;
   setMousePosition: (point: IPoint | null) => void;
 
-  /// Para mantener el estado de los dibujos
-  drawings: ReactElement[];
-  addDrawing: (drawing: ReactElement) => void;
-  clearDrawings: () => void;
-  currentPoints: IPoint[] | null;
-  setCurrentPoints: (points: IPoint[] | null) => void;
-  currentDrawing: ReactElement | null; 
-  setCurrentDrawing: (drawing: ReactElement | null) => void;
+  selectedComponentId: string | null;
+  setSelectedComponentId: (id: string | null) => void;
 
   windowModel: WindowModel | null;
   setWindowModel: (windowModel: WindowModel | null) => void;
@@ -40,23 +33,17 @@ const useAppStore = create<IAppStore>((set) => ({
   /// Posición del mouse
   mousePosition: null,
   setMousePosition: (point: IPoint | null) => set(() => ({ mousePosition: point })),
-  
-  /// Para mantener el estado de los dibujos
-  drawings: [],
-  addDrawing: (drawing: ReactElement) => set((state) => ({ drawings: [...state.drawings, drawing] })),
-  clearDrawings: () => set(() => ({ drawings: [] })),
-  currentPoints: null,
-  setCurrentPoints: (points: IPoint[] | null) => set(() => ({ currentPoints: points })),
-  currentDrawing: null,
-  setCurrentDrawing: (drawing: ReactElement | null) => set(() => ({ currentDrawing: drawing })),
 
+  selectedComponentId: null,
+  setSelectedComponentId: (id: string | null) => set(() => ({ selectedComponentId: id })),
+  
   windowModel: null,
   setWindowModel: (windowModel: WindowModel | null) => set(() => ({ windowModel: windowModel })),
 
   /// Propiedades de la ventana
   horizontalSections: 3,
   setHorizontalSections: (sections: number) => set(() => ({ horizontalSections: sections })),
-  verticalSections: 1,
+  verticalSections: 2,
   setVerticalSections: (sections: number) => set(() => ({ verticalSections: sections })),
   frameHeight: 20,
   setFrameHeight: (height: number) => set(() => ({ frameHeight: height })),

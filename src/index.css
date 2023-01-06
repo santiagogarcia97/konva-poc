@@ -18,7 +18,7 @@ code {
 
 
 .btn {
-    @apply font-bold py-2 px-4 rounded outline-none;
+    @apply font-medium py-1 px-4 rounded outline-none;
   }
   .btn-blue {
     @apply bg-blue-500 text-white;

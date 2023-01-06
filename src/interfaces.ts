@@ -9,3 +9,17 @@ export interface IRectangle {
   bottomLeft: IPoint;
   bottomRight: IPoint;
 }
+
+export interface IWindowComponent {
+  id: string;
+  name: string;
+  type: WindowComponentType;
+}
+
+export enum WindowComponentType {
+  EXTERNAL_SIDE,
+  INTERNAL_SIDE,
+  HORIZONTAL_CROSSBAR,
+  VERTICAL_CROSSBAR,
+  GLASS,
+}

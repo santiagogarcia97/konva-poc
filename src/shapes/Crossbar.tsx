@@ -1,8 +1,12 @@
 import { Shape } from "react-konva";
 import { IPoint } from "../interfaces";
 import { CrossbarModel } from "../models/CrossbarModel";
+import useAppStore from "../store";
 
 export const Crossbar = ({ crossbar }: { crossbar: CrossbarModel }) => {
+
+    const selectedComponentId = useAppStore(state => state.selectedComponentId);
+    const setSelectedComponentId = useAppStore(state => state.setSelectedComponentId);
 
     const points: IPoint[] = Object.values(crossbar.corners);
 
@@ -22,8 +26,9 @@ export const Crossbar = ({ crossbar }: { crossbar: CrossbarModel }) => {
             context.fillStrokeShape(shape);
 
         }}
-        fill="#A57548"
+        fill={selectedComponentId === crossbar.id ? "#96031A": "#A57548"}
         stroke="black"
         strokeWidth={1}
+        onClick={() => setSelectedComponentId(crossbar.id)}
     />);
 }

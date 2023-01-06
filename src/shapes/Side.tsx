@@ -1,7 +1,12 @@
 import { Shape } from "react-konva";
 import { SideModel } from "../models/SideModel";
+import useAppStore from "../store";
 
 export const Side = ({ side }: { side: SideModel }) => {
+    const selectedComponentId = useAppStore(state => state.selectedComponentId);
+    const setSelectedComponentId = useAppStore(state => state.setSelectedComponentId);
+
+
     return (<Shape
         sceneFunc={(context, shape) => {
 
@@ -18,8 +23,9 @@ export const Side = ({ side }: { side: SideModel }) => {
             context.fillStrokeShape(shape);
 
         }}
-        fill="#A57548"
+        fill={selectedComponentId === side.id ? "#96031A": "#A57548"}
         stroke="black"
         strokeWidth={1}
+        onClick={() => setSelectedComponentId(side.id)}
     />);
 }

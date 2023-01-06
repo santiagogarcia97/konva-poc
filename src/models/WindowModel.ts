@@ -1,5 +1,5 @@
 import { calculateInternalPoints, incrementString, isRectangle, randomId } from "../helpers";
-import { IPoint, IRectangle } from "../interfaces";
+import { IPoint, IRectangle, IWindowComponent, WindowComponentType } from "../interfaces";
 import { CrossbarModel } from "./CrossbarModel";
 import { GlassModel } from "./GlassModel";
 import { SideModel } from "./SideModel";
@@ -27,6 +27,8 @@ export class WindowModel {
 
   editing: boolean;
 
+  components: IWindowComponent[];
+
   constructor(
     id: string | null,
     height: number,
@@ -44,6 +46,7 @@ export class WindowModel {
     internalSides?: SideModel[],
     rectangle: IRectangle | null = null,
     editing: boolean = false,
+    windowComponents: IWindowComponent[] = [],
   ) {
     this.id = id ?? randomId();
     this.height = height;
@@ -67,6 +70,8 @@ export class WindowModel {
 
     this.editing = editing;
 
+    this.components = windowComponents;
+
     this.calcuateWindow();
   }
 
@@ -88,6 +93,7 @@ export class WindowModel {
       this.internalSides,
       this._rectangle,
       this.editing,
+      this.components,
     );
   }
 
@@ -123,6 +129,7 @@ export class WindowModel {
     this.createSides();
     this.createCrossbars();
     this.createGlasses();
+    this.createComponents();
 
   }
 
@@ -137,9 +144,18 @@ export class WindowModel {
       const c = this.internalPoints[(i + 1) % this.internalPoints.length];
       const d = this.internalPoints[i];
 
-      if (a && b && c && d) this.sides.push(new SideModel(randomId(), [a, b, c, d]));
+      if (a && b && c && d) this.sides.push(
+        new SideModel(
+          randomId(),
+          [a, b, c, d],
+          'Lado Exterior ' + String.fromCharCode(65 + i),
+          WindowComponentType.EXTERNAL_SIDE
+        )
+      );
     }
   }
+
+
 
 
   createCrossbars(): void {
@@ -161,7 +177,7 @@ export class WindowModel {
       const bottomLeft = { x: this._rectangle.topLeft.x + i * sectionWidth - this.frameHeight / 2, y: this._rectangle.bottomLeft.y };
 
       //texts.push(<Text key={ randomId() } x = { topLeft.x } y = { topLeft.y } text = { 'H' + i.toString() } fontSize = { 12} />);
-      this.verticalCrossbars.push(new CrossbarModel(randomId(), { topLeft, topRight, bottomRight, bottomLeft }));
+      this.verticalCrossbars.push(new CrossbarModel(randomId(), { topLeft, topRight, bottomRight, bottomLeft }, 'Travesaño Vertical ' + i.toString()));
     }
 
 
@@ -182,7 +198,7 @@ export class WindowModel {
       const bottomLeft = { x: leftX, y: bottomY };
 
       //texts.push(<Text key={ randomId() } x = { topLeft.x } y = { topLeft.y } text = { 'V' + i.toString() } fontSize = { 12} />);
-      this.horizontalCrossbars.push(new CrossbarModel(randomId(), { topLeft, topRight, bottomRight, bottomLeft }));
+      this.horizontalCrossbars.push(new CrossbarModel(randomId(), { topLeft, topRight, bottomRight, bottomLeft }, 'Travesaño Horizontal ' + (i + 1).toString()));
 
     }
   }
@@ -199,10 +215,12 @@ export class WindowModel {
     }
 
     /// Creo los vidrios con sus respectivos sides
-    let lastGlassName: string | null = null;
+    let glassName: string | null = null;
 
     for (let i = 0; i < this.verticalDivisions; i++) {
       for (let j = 0; j < this.horizontalDivisions; j++) {
+        glassName = glassName ? incrementString(glassName) : 'A';
+
         const topLeft = {
           x: j === 0 ? this._rectangle.topLeft.x : this.verticalCrossbars[j - 1].corners.topRight.x,
           y: i === 0 ? this._rectangle.topLeft.y : this.horizontalCrossbars[(i - 1) * this.horizontalDivisions + j].corners.bottomLeft.y
@@ -231,14 +249,30 @@ export class WindowModel {
           const c = glassPoints[(i + 1) % glassPoints.length];
           const d = glassPoints[i];
 
-          if (a && b && c && d)
-            this.sides.push(new SideModel(randomId(), [a, b, c, d]));
+          if (a && b && c && d) this.sides.push(
+            new SideModel(
+              randomId(),
+              [a, b, c, d],
+              'Lado interior ' + glassName + (i + 1).toString(),
+              WindowComponentType.INTERNAL_SIDE,
+            )
+          );
         }
 
-        lastGlassName = lastGlassName ? incrementString(lastGlassName) : 'A';
-        this.glasses.push(new GlassModel(randomId(), glassPoints, lastGlassName));
+
+        this.glasses.push(new GlassModel(randomId(), glassPoints, glassName));
       }
     }
+  }
+
+
+  createComponents(): void {
+    this.components = [];
+
+    this.sides.forEach(side => this.components.push({ id: side.id, name: side.name, type: side.componentType }));
+    this.verticalCrossbars.forEach(crossbar => this.components.push({ id: crossbar.id, name: crossbar.name, type: WindowComponentType.VERTICAL_CROSSBAR }));
+    this.horizontalCrossbars.forEach(crossbar => this.components.push({ id: crossbar.id, name: crossbar.name, type: WindowComponentType.HORIZONTAL_CROSSBAR }));
+    this.glasses.forEach(glass => this.components.push({ id: glass.id, name: 'Vidrio ' + glass.name, type: WindowComponentType.GLASS }));
   }
 
 
