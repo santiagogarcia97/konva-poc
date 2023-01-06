@@ -1,15 +1,16 @@
 {
   "files": {
-    "main.css": "/konva-poc/static/css/main.23d84eed.css",
-    "main.js": "/konva-poc/static/js/main.64037600.js",
+    "main.css": "/konva-poc/static/css/main.e0b4d233.css",
+    "main.js": "/konva-poc/static/js/main.6f5ed5b7.js",
     "static/js/787.cd8ad5af.chunk.js": "/konva-poc/static/js/787.cd8ad5af.chunk.js",
+    "static/media/logo_mapplics.png": "/konva-poc/static/media/logo_mapplics.24204780b3836e7247e2.png",
     "index.html": "/konva-poc/index.html",
-    "main.23d84eed.css.map": "/konva-poc/static/css/main.23d84eed.css.map",
-    "main.64037600.js.map": "/konva-poc/static/js/main.64037600.js.map",
+    "main.e0b4d233.css.map": "/konva-poc/static/css/main.e0b4d233.css.map",
+    "main.6f5ed5b7.js.map": "/konva-poc/static/js/main.6f5ed5b7.js.map",
     "787.cd8ad5af.chunk.js.map": "/konva-poc/static/js/787.cd8ad5af.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.23d84eed.css",
-    "static/js/main.64037600.js"
+    "static/css/main.e0b4d233.css",
+    "static/js/main.6f5ed5b7.js"
   ]
 }
