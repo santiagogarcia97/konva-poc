@@ -58,39 +58,69 @@ const App = () => {
 
     const onClick = (e: KonvaEventObject<MouseEvent>) => {
         const mousePosition = getMousePosition(e);
-        
-        /// Si ya tengo un dibujo hecho no le permito agregar otro
-        if (drawings.length && !currentPoints) return;
+        //debugger;
+        /// Si la ventana no esta en modo edicion no le permito hacer nada
+        if (!windowModel?.editing) return;
 
-        /// Si no hay puntos, se crea el primer punto
-        if (!currentPoints) {
-            setCurrentPoints([mousePosition]);
+        if (!windowModel.points.length) {
+            const points = [mousePosition];
+            windowModel.points = points;
+            windowModel.calcuateWindow();
+            setWindowModel(windowModel.clone());
             return;
         }
 
-        /// Si hay puntos y se hace click derecho, se elimina el ultimo punto
         if (e.evt.button === 2) {
-            currentPoints.pop();
-            setCurrentPoints(currentPoints?.length ? [...currentPoints] : null);
-
-            /// Si quedan puntos en el array actualizo el dibujo actual llamando a onMouseMove
-            /// si no hay puntos, se elimina el dibujo actual
-            if (currentPoints?.length) onMouseMove(e); else setCurrentDrawing(null);
+            windowModel.points.pop();
+            windowModel.calcuateWindow();
+            setWindowModel(windowModel.clone());
             return;
         }
 
-
-        /// Si hay puntos y se hace click izquierdo dentro de un radio del punto inicial, se cierra y se crea el dibujo
-        if (isInsideRadius(currentPoints![0], mousePosition, 50)) {
-            addDrawing(<Test key={randomId()} points={currentPoints} closed />);
-            setCurrentPoints(null);
-            setCurrentDrawing(null);
+        if (isInsideRadius(windowModel.points[0], mousePosition, 50)) {
+            windowModel.editing = false;
+            windowModel.points.pop();
+            setWindowModel(windowModel.clone());
             return;
         }
 
+        windowModel.points.push(mousePosition);
+        windowModel.calcuateWindow();
+        setWindowModel(windowModel.clone());
 
-        /// Si hay puntos y se hace click izquierdo, se crea un nuevo punto
-        setCurrentPoints([...currentPoints, getEndingPoint(mousePosition)]);
+
+        // /// Si ya tengo un dibujo hecho no le permito agregar otro
+        // if (drawings.length && !currentPoints) return;
+
+        // /// Si no hay puntos, se crea el primer punto
+        // if (!currentPoints) {
+        //     setCurrentPoints([mousePosition]);
+        //     return;
+        // }
+
+        // /// Si hay puntos y se hace click derecho, se elimina el ultimo punto
+        // if (e.evt.button === 2) {
+        //     currentPoints.pop();
+        //     setCurrentPoints(currentPoints?.length ? [...currentPoints] : null);
+
+        //     /// Si quedan puntos en el array actualizo el dibujo actual llamando a onMouseMove
+        //     /// si no hay puntos, se elimina el dibujo actual
+        //     if (currentPoints?.length) onMouseMove(e); else setCurrentDrawing(null);
+        //     return;
+        // }
+
+
+        // /// Si hay puntos y se hace click izquierdo dentro de un radio del punto inicial, se cierra y se crea el dibujo
+        // if (isInsideRadius(currentPoints![0], mousePosition, 50)) {
+        //     addDrawing(<Test key={randomId()} points={currentPoints} closed />);
+        //     setCurrentPoints(null);
+        //     setCurrentDrawing(null);
+        //     return;
+        // }
+
+
+        // /// Si hay puntos y se hace click izquierdo, se crea un nuevo punto
+        // setCurrentPoints([...currentPoints, getEndingPoint(mousePosition)]);
     };
 
     /// Funcion para proyectar el punto paralelo al eje X o Y dependiendo de cual sea mas cercano
@@ -110,20 +140,33 @@ const App = () => {
     const onMouseMove = (e: KonvaEventObject<MouseEvent>) => {
         const mousePosition = getMousePosition(e);
 
-        /// Si no hay puntos, no hago nada
-        if (!currentPoints) return;
+        if (!windowModel?.editing) return;
 
-        /// Si hay puntos, previsualizo la linea que se esta dibujando
-        clearDrawings();
-        if (isInsideRadius(currentPoints[0], mousePosition, 50)) {
-            addDrawing(
-                <Test key={randomId()} points={currentPoints} closed />
-            );
-        } else {
-            addDrawing(
-                <Test key={randomId()} points={[...currentPoints, getEndingPoint(mousePosition)]} closed={false} />
-            );
+        if (windowModel.points.length) {
+            if (windowModel.points.length > 1) {
+                windowModel.points.pop();
+            }
+
+            windowModel.points.push(mousePosition);
+            windowModel.calcuateWindow();
+            setWindowModel(windowModel.clone());
+
         }
+
+        // /// Si no hay puntos, no hago nada
+        // if (!currentPoints) return;
+
+        // /// Si hay puntos, previsualizo la linea que se esta dibujando
+        // clearDrawings();
+        // if (isInsideRadius(currentPoints[0], mousePosition, 50)) {
+        //     addDrawing(
+        //         <Test key={randomId()} points={currentPoints} closed />
+        //     );
+        // } else {
+        //     addDrawing(
+        //         <Test key={randomId()} points={[...currentPoints, getEndingPoint(mousePosition)]} closed={false} />
+        //     );
+        // }
     };
 
 
@@ -133,7 +176,7 @@ const App = () => {
     //if (currentDrawing) drawingsList.push(currentDrawing);
 
     const drawingsList = [];
-    if(windowModel) drawingsList.push(<Window key={randomId()} window={windowModel} />);
+    if (windowModel) drawingsList.push(<Window key={randomId()} window={windowModel} />);
 
 
     const onContextMenu = (e: KonvaEventObject<PointerEvent>) => {
@@ -150,7 +193,7 @@ const App = () => {
                 onClick={onClick}
                 onMouseMove={onMouseMove}
                 onContextMenu={onContextMenu}
-                offsetX={Math.floor(-window.innerWidth / 2)}
+                offsetX={Math.floor(-window.innerWidth / 2) - 288 / 2}
                 offsetY={Math.floor(-window.innerHeight / 2)}
             >
                 <Grid width={canvaWidth} height={canvaHeight}></Grid>

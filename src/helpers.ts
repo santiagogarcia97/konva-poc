@@ -122,6 +122,7 @@ export const calculateCentroid = (coords: IPoint[]): IPoint => {
 }
 
 export const isRectangle = (coords: IPoint[]): IRectangle | null => {
+  if (coords.length !== 4) return null;
 
   const minX = Math.min(...coords.map(c => c.x));
   const maxX = Math.max(...coords.map(c => c.x));
@@ -137,3 +138,34 @@ export const isRectangle = (coords: IPoint[]): IRectangle | null => {
 
 }
 
+
+export const incrementString = (value: string): string => {
+  let carry = 1;
+  let res = '';
+
+  for (let i = value.length - 1; i >= 0; i--) {
+    let char = value.toUpperCase().charCodeAt(i);
+
+    char += carry;
+
+    if (char > 90) {
+      char = 65;
+      carry = 1;
+    } else {
+      carry = 0;
+    }
+
+    res = String.fromCharCode(char) + res;
+
+    if (!carry) {
+      res = value.substring(0, i) + res;
+      break;
+    }
+  }
+
+  if (carry) {
+    res = 'A' + res;
+  }
+
+  return res;
+}

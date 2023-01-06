@@ -5,8 +5,6 @@ import Test from "../shapes/Test";
 import useAppStore from "../store";
 
 const Tools = () => {
-    const clearDrawings = useAppStore(state => state.clearDrawings);
-    const addDrawing = useAppStore(state => state.addDrawing);
 
     const horizontalSections = useAppStore(state => state.horizontalSections);
     const verticalSections = useAppStore(state => state.verticalSections);
@@ -39,7 +37,7 @@ const Tools = () => {
             { x: -width / 2, y: height / 2 },
         ];
 
-        clearDrawings();
+        setWindowModel(null);
         //addDrawing(<Test key={randomId()} points={points} closed />);
         setWindowsHeight(height);
         setWindowsWidth(width);
@@ -58,16 +56,65 @@ const Tools = () => {
 
 
     const freeDrawing = () => {
-        clearDrawings();
+        const newWindow = new WindowModel(randomId(), windowsHeight, windowsWidth, frameHeight, internalFrameHeight, horizontalSections, verticalSections, []);
+        newWindow.editing = true;
+        setWindowModel(newWindow);
     }
+
+
+    const onFrameHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const frameHeight = Number(e.target.value);
+        setFrameHeight(frameHeight);
+
+        if (windowModel) {
+            windowModel.frameHeight = frameHeight;
+            windowModel.calcuateWindow();
+            setWindowModel(windowModel.clone());
+        }
+    }
+
+    const onInternalFrameHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const internalFrameHeight = Number(e.target.value);
+        setInternalFrameHeight(internalFrameHeight);
+
+        if (windowModel) {
+            windowModel.internalFrameHeight = internalFrameHeight;
+            windowModel.calcuateWindow();
+            setWindowModel(windowModel.clone());
+        }
+    }
+
+    const onHorizontalSectionsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const horizontalSections = Number(e.target.value);
+        setHorizontalSections(horizontalSections);
+
+        if (windowModel) {
+            windowModel.horizontalDivisions = horizontalSections;
+            windowModel.calcuateWindow();
+            setWindowModel(windowModel.clone());
+        }
+    }
+
+    const onVerticalSectionsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const verticalSections = Number(e.target.value);
+        setVerticalSections(verticalSections);
+
+        if (windowModel) {
+            windowModel.verticalDivisions = verticalSections;
+            windowModel.calcuateWindow();
+            setWindowModel(windowModel.clone());
+        }
+    }
+
+
 
 
     return (
         <div className="h-full w-72 bg-gray-300 absolute top-0 flex flex-col items-center p-4">
 
-            <div className="w-full">Mouse Position  X:{mousePosition?.x ?? '-'} Y:{mousePosition?.y ?? '-'}</div>
+            <div className="w-full">Mouse X:{mousePosition?.x ?? '-'} Y:{mousePosition?.y ?? '-'}</div>
 
-            <button className="btn btn-blue mt-4 w-full" onClick={() => clearDrawings()}>Borrar</button>
+            <button className="btn btn-blue mt-4 w-full" onClick={() => setWindowModel(null)}>Borrar</button>
 
             <button className="btn btn-blue mt-2 w-full" onClick={() => newSquareFrame(windowsHeight, windowsWidth)}>Nueva ventana</button>
 
@@ -84,17 +131,17 @@ const Tools = () => {
             <div className="mt-4 w-full flex flex-col">
                 <label className="mr-2">Altura del marco</label>
                 <div className="flex flex-row">
-                    <input className="btn w-full" type='number' min={1} max={30} value={frameHeight} onChange={(e) => setFrameHeight(Number(e.target.value))} />
-                    <input className="ml-4 btn w-full" type='number' min={1} max={30} value={internalFrameHeight} onChange={(e) => setInternalFrameHeight(Number(e.target.value))} />
+                    <input className="btn w-full" type='number' min={1} max={30} value={frameHeight} onChange={onFrameHeightChange} />
+                    <input className="ml-4 btn w-full" type='number' min={1} max={30} value={internalFrameHeight} onChange={onInternalFrameHeightChange} />
                 </div>
             </div>
             <div className="mt-4 w-full flex flex-col">
-                <label className="mr-2">Divisiones horizontales</label>
-                <input className="btn" type='number' min={1} max={30} value={horizontalSections} onChange={(e) => setHorizontalSections(Number(e.target.value))} />            </div>
+                <label className="mr-2">Secciones horizontales</label>
+                <input className="btn" type='number' min={1} max={10} value={horizontalSections} onChange={onHorizontalSectionsChange} />            </div>
 
             <div className="mt-4 w-full flex flex-col">
-                <label className="mr-2">Divisiones verticales</label>
-                <input className="btn" type='number' min={1} max={30} value={verticalSections} onChange={(e) => setVerticalSections(Number(e.target.value))} />
+                <label className="mr-2">Secciones verticales</label>
+                <input className="btn" type='number' min={1} max={10} value={verticalSections} onChange={onVerticalSectionsChange} />
             </div>
 
         </div>

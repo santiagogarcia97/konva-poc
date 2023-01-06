@@ -1,4 +1,4 @@
-import { calculateInternalPoints, isRectangle, randomId } from "../helpers";
+import { calculateInternalPoints, incrementString, isRectangle, randomId } from "../helpers";
 import { IPoint, IRectangle } from "../interfaces";
 import { CrossbarModel } from "./CrossbarModel";
 import { GlassModel } from "./GlassModel";
@@ -25,6 +25,8 @@ export class WindowModel {
 
   private _rectangle: IRectangle | null = null;
 
+  editing: boolean;
+
   constructor(
     id: string | null,
     height: number,
@@ -40,7 +42,8 @@ export class WindowModel {
     horizontalCrossbars?: CrossbarModel[],
     sides?: SideModel[],
     internalSides?: SideModel[],
-    rectangle: IRectangle | null = null
+    rectangle: IRectangle | null = null,
+    editing: boolean = false,
   ) {
     this.id = id ?? randomId();
     this.height = height;
@@ -52,7 +55,7 @@ export class WindowModel {
     this.verticalDivisions = verticalDivisions;
 
     this.points = points ?? [];
-    this.internalPoints = internalPoints ?? calculateInternalPoints(this.points, this.frameHeight);
+    this.internalPoints = internalPoints ?? [];
 
     this.glasses = glasses ?? [];
     this.verticalCrossbars = verticalCrossbars ?? [];
@@ -61,6 +64,8 @@ export class WindowModel {
     this.internalSides = internalSides ?? [];
 
     this._rectangle = rectangle;
+
+    this.editing = editing;
 
     this.calcuateWindow();
   }
@@ -81,14 +86,19 @@ export class WindowModel {
       this.horizontalCrossbars,
       this.sides,
       this.internalSides,
-      this._rectangle);
+      this._rectangle,
+      this.editing,
+    );
   }
 
 
   calcuateWindow(): void {
-    console.log(this);
+    this.internalPoints = calculateInternalPoints(this.points, this.frameHeight)
+
     /// Si tengo dos puntos solamente dibujo una seccion
     if (this.points.length === 2) {
+      this.internalPoints = [];
+
       const uVectorX = (this.points[1].x - this.points[0].x) / Math.sqrt(Math.pow(this.points[1].x - this.points[0].x, 2) + Math.pow(this.points[1].y - this.points[0].y, 2));
       const uVectorY = (this.points[1].y - this.points[0].y) / Math.sqrt(Math.pow(this.points[1].x - this.points[0].x, 2) + Math.pow(this.points[1].y - this.points[0].y, 2));
       const uVector = { x: uVectorX, y: uVectorY };
@@ -110,13 +120,14 @@ export class WindowModel {
       }
     }
 
-    console.log(this);
-
     this.createSides();
+    this.createCrossbars();
+    this.createGlasses();
 
   }
 
   createSides(): void {
+    this.sides = [];
     if (this.internalPoints.length < 2) console.log('Not enough points to draw sides');
 
     for (let i = 0; i < this.points.length; i++) {
@@ -128,12 +139,13 @@ export class WindowModel {
 
       if (a && b && c && d) this.sides.push(new SideModel(randomId(), [a, b, c, d]));
     }
-
-    this.createCrossbars();
   }
 
 
   createCrossbars(): void {
+    this.verticalCrossbars = [];
+    this.horizontalCrossbars = [];
+
     this._rectangle = isRectangle(this.internalPoints);
     if (!this._rectangle) return;
 
@@ -173,16 +185,22 @@ export class WindowModel {
       this.horizontalCrossbars.push(new CrossbarModel(randomId(), { topLeft, topRight, bottomRight, bottomLeft }));
 
     }
-
-    this.createGlasses();
   }
 
 
   createGlasses(): void {
-    if (!this._rectangle) return;
+    this.glasses = [];
+
+    if (!this._rectangle) {
+      if (this.internalPoints.length > 2)
+        this.glasses.push(new GlassModel(randomId(), this.internalPoints, 'A'));
+
+      return;
+    }
 
     /// Creo los vidrios con sus respectivos sides
-    let glassCount = 0;
+    let lastGlassName: string | null = null;
+
     for (let i = 0; i < this.verticalDivisions; i++) {
       for (let j = 0; j < this.horizontalDivisions; j++) {
         const topLeft = {
@@ -217,8 +235,8 @@ export class WindowModel {
             this.sides.push(new SideModel(randomId(), [a, b, c, d]));
         }
 
-        this.glasses.push(new GlassModel(randomId(), glassPoints));
-        glassCount++;
+        lastGlassName = lastGlassName ? incrementString(lastGlassName) : 'A';
+        this.glasses.push(new GlassModel(randomId(), glassPoints, lastGlassName));
       }
     }
   }

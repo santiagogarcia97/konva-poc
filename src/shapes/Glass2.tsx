@@ -28,7 +28,7 @@ export const Glass2 = ({glass}: {glass: GlassModel}) => {
                 strokeWidth={1}
                 opacity={0.6}
             />
-            <Text text={glass.id} x={centroid.x} y={centroid.y} />
+            <Text text={glass.name} x={centroid.x} y={centroid.y} />
         </Group>
     );
 }
